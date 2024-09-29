@@ -1,8 +1,8 @@
-{% test recency(model, field, datepart, interval, ignore_time_component=False, group_by_columns = []) %}
-  {{ return(adapter.dispatch('test_recency', 'dbt_utils')(model, field, datepart, interval, ignore_time_component, group_by_columns)) }}
+{% test recency(model, field, datepart, interval, ignore_time_component=False, group_by_columns=[], row_condition=None) %}
+  {{ return(adapter.dispatch('test_recency', 'dbt_utils')(model, field, datepart, interval, ignore_time_component, group_by_columns, row_condition)) }}
 {% endtest %}
 
-{% macro default__test_recency(model, field, datepart, interval, ignore_time_component, group_by_columns) %}
+{% macro default__test_recency(model, field, datepart, interval, ignore_time_component, group_by_columns, row_condition) %}
 
 {% set threshold = 'cast(' ~ dbt.dateadd(datepart, interval * -1, dbt.current_timestamp()) ~ ' as ' ~ ('date' if ignore_time_component else dbt.type_timestamp()) ~ ')'  %}
 
@@ -24,6 +24,10 @@ with recency as (
       {%- endif %}
 
     from {{ model }}
+
+    {% if row_condition %}
+    where {{ row_condition }}
+    {% endif %}
 
     {{ groupby_gb_cols }}
 
